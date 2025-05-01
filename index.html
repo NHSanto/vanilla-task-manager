@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <h1>Task Manager</h1>
+
+    <div class="task-form">
+        <input type="text" id="taskTitle" placeholder="Task title" required>
+        <textarea id="taskDescription" placeholder="Task description"></textarea>
+        <div class="form-row">
+            <div>
+                <label for="taskDueDate">Due Date:</label>
+                <input type="date" id="taskDueDate">
+            </div>
+            <div>
+                <label for="taskPriority">Priority:</label>
+                <select id="taskPriority">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+        </div>
+        <button id="addButton">ADD TASK</button>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="all">All</div>
+        <div class="tab" data-tab="active">Active</div>
+        <div class="tab" data-tab="completed">Completed</div>
+    </div>
+
+    <div class="task-controls">
+        <span id="taskCount">0 tasks</span>
+        <div class="pagination">
+            <button id="prevPage" disabled>Previous</button>
+            <span id="pageInfo">Page 1</span>
+            <button id="nextPage" disabled>Next</button>
+        </div>
+    </div>
+
+    <ul id="taskList"></ul>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
