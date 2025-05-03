@@ -1,5 +1,22 @@
+// script.js - Complete Task Manager with Auth Integration
+
 document.addEventListener('DOMContentLoaded', function() {
-    // DOM elements
+    // ====================== DOM Elements ======================
+    // Auth elements
+    const authScreens = document.getElementById('auth-screens');
+    const loginScreen = document.getElementById('login-screen');
+    const registerScreen = document.getElementById('register-screen');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const showRegisterLink = document.getElementById('show-register-link');
+    const showLoginLink = document.getElementById('show-login-link');
+
+    // App elements
+    const appContainer = document.getElementById('app-container');
+    const logoutBtn = document.getElementById('logout-btn');
+    const currentUserEmail = document.getElementById('current-user-email');
+
+    // Task manager elements
     const taskTitle = document.getElementById('taskTitle');
     const taskDescription = document.getElementById('taskDescription');
     const taskDueDate = document.getElementById('taskDueDate');
@@ -19,24 +36,109 @@ document.addEventListener('DOMContentLoaded', function() {
     const tasksPerPage = 5;
 
     // Initialize
-    loadTasks();
+    initApp();
 
-    // Load tasks from API/localStorage
+    // ====================== Auth Functions ======================
+    function initApp() {
+        if (authService.isAuthenticated()) {
+            showApp();
+            loadTasks();
+        } else {
+            showAuth();
+        }
+        setupAuthEventListeners();
+    }
+
+    function showApp() {
+        currentUserEmail.textContent = authService.currentUser.email;
+        authScreens.style.display = 'none';
+        appContainer.style.display = 'block';
+    }
+
+    function showAuth() {
+        appContainer.style.display = 'none';
+        authScreens.style.display = 'flex';
+        loginScreen.style.display = 'block';
+        registerScreen.style.display = 'none';
+
+        // Reset forms
+        loginForm.reset();
+        registerForm.reset();
+    }
+
+    function setupAuthEventListeners() {
+        // Toggle between login/register
+        showRegisterLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            loginScreen.style.display = 'none';
+            registerScreen.style.display = 'block';
+        });
+
+        showLoginLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            registerScreen.style.display = 'none';
+            loginScreen.style.display = 'block';
+        });
+
+        // Login form submission
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                authService.login(email, password);
+                showApp();
+                loadTasks();
+                loginForm.reset();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        // Register form submission
+        registerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+
+            try {
+                if (password !== confirmPassword) {
+                    throw new Error('Passwords do not match');
+                }
+                authService.register(name, email, password);
+                showApp();
+                loadTasks();
+                registerForm.reset();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        // Logout button
+        logoutBtn.addEventListener('click', function() {
+            authService.logout();
+            tasks = [];
+            showAuth();
+        });
+    }
+
+
     function loadTasks() {
-
-        // For demo purposes, use localStorage
-        const savedTasks = localStorage.getItem('tasks');
-        if (savedTasks) {
-            tasks = JSON.parse(savedTasks);
+        if (authService.isAuthenticated()) {
+            tasks = authService.currentUser.tasks || [];
             renderTasks();
         }
     }
 
-    // Save tasks to API/localStorage
     function saveTasks() {
-        // For demo purposes, use localStorage
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-        renderTasks();
+        if (authService.isAuthenticated()) {
+            authService.currentUser.tasks = tasks;
+            authService.setCurrentUser(authService.currentUser);
+            renderTasks();
+        }
     }
 
     function renderTasks() {
@@ -131,13 +233,12 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         tasks.unshift(newTask);
+        saveTasks();
 
         taskTitle.value = '';
         taskDescription.value = '';
         taskDueDate.value = '';
         taskPriority.value = 'medium';
-
-        saveTasks();
     }
 
     function toggleTaskComplete(taskId) {
