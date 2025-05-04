@@ -81,13 +81,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Login form submission
-        loginForm.addEventListener('submit', function(e) {
+        loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
 
             try {
-                authService.login(email, password);
+                await authService.login(email, password);
                 showApp();
                 loadTasks();
                 loginForm.reset();
@@ -118,8 +118,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Logout button
-        logoutBtn.addEventListener('click', function() {
-            authService.logout();
+        logoutBtn.addEventListener('click', async function() {
+            console.log("logout")
+            await authService.logout();
             tasks = [];
             showAuth();
         });
