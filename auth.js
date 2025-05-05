@@ -12,9 +12,9 @@ function saveUsers(users) {
 }
 
 // Set current user
-function setCurrentUser(user) {
+async function setCurrentUser(user) {
     currentUser = user;
-    localStorage.setItem('currentUser', JSON.stringify(user));
+    await localStorage.setItem('currentUser', JSON.stringify(user));
 }
 
 // Clear current user (logout)
@@ -52,6 +52,18 @@ function register(name, email, password) {
     return newUser;
 }
 
+function parseJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+        atob(base64)
+            .split('')
+            .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+    );
+    return JSON.parse(jsonPayload);
+}
+
 // Login
 async function login(email, password) {
     const response = await fetch('http://localhost:8080/auth/login', {
@@ -59,35 +71,26 @@ async function login(email, password) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
     });
+
     if (!response.ok) {
         throw new Error('Invalid email or password');
     }
     const data = await response.json();
+    const payload = parseJwt(data.accessToken);
+
     const user = {
-        email, // you can also decode accessToken to extract fullName or role
-        name: parseJwt(data.accessToken).fullName,
-        password: parseJwt(data.accessToken).password,
+        email,
+        name: payload.fullName,
+        userId: payload.userId,
+        role: payload.role,
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
         tasks: [] // Initialize tasks
     };
-    setCurrentUser(user);
+    await setCurrentUser(user);
     return user;
 }
-// Helper to decode JWT (Base64 decode payload)
-function parseJwt(token) {
-    try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
 
-        return JSON.parse(jsonPayload);
-    } catch (e) {
-        return {};
-    }
-}
 // Logout user
 async function logout() {
     const user = currentUser;
